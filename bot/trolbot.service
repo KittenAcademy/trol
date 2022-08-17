@@ -1,0 +1,16 @@
+[Unit]
+Description=TROL Discord Bot
+Requires=network-online.target
+Wants=network-online.target trolbrain.service
+
+[Service]
+ExecStart="/mnt/nas1/ka/src/trol/bot/trolbot.py" --config="/mnt/nas1/ka/src/trol/bot/discord.conf"
+Restart=on-failure
+RestartSec=10
+User=chris
+Group=chris
+KillMode=process
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

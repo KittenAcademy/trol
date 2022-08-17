@@ -1,0 +1,24 @@
+{
+   "WSPORT": 8081,
+   "WSHOST": "0.0.0.0",
+   "WSKEY": "/mnt/nas1/ka/src/src/trol/brains/old/resources/cert.pem",
+
+   "newsInterval": 900,
+
+   "camRotationTime": 300,
+
+   "camFetchInterval": 5,
+   "clientCamUpdateInterval":5,
+   "camTimeout": 5,
+   "camPanicTime": 60,
+
+   "camuser": "",
+   "campass": "",
+   "thumbWidth": 240,
+   "thumbHeight": 135,
+
+   "defaultImage": "/mnt/nas1/ka/src/trol/brains/old/resources/defaultImage.b64",
+   "camDefFile": "/mnt/nas1/ka/src/trol/brains/conf/initialcameras.json",
+   "posfile": "/mnt/nas1/ka/src/trol/brains/conf/currentposdata.json",
+   "newsfile": "/mnt/nas1/ka/src/trol/brains/conf/currentnewsdata.json"
+}

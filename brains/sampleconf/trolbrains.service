@@ -1,0 +1,18 @@
+[Unit]
+Description=TROL Websocket Server and Brains
+Requires=network-online.target
+Wants=network-online.target troldiscord.service
+
+[Service]
+Type=simple
+KillMode=process
+ExecStart="/mnt/nas1/ka/src/trol/brains/tb.py" --config="/mnt/nas1/ka/src/trol/brains/conf/wsconf.json"
+Restart=on-failure
+RestartSec=10
+User=chris
+Group=chris
+
+[Install]
+WantedBy=multi-user.target
+
+

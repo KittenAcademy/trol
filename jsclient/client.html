@@ -1,0 +1,265 @@
+<!Doctype html>
+<html>
+<head>
+   <title>TROL</title>
+   <meta charset="utf-8">
+   <meta name="viewport" content="target-densitydpi=device-dpi" />
+   <style>
+      body        { background-color: black;
+                    color: white;
+                  }
+   </style>
+</head>
+<body>
+   <div id="header" style="clear: both"><h1 id="status">Not Connected</h1></div>
+   <div style="clear: both"><h1>Positions</h1></div>
+   <div id="trolpos" style="clear: both"></div>
+   <div style="clear: both"><h1>Cameras</h1></div>
+   <div id="trolcams" style="clear: both"></div>
+   <div style="clear: both"><h1>Scenes</h1></div>
+   <div id="trolscenes" style="clear: both"></div>
+   <div id="footer" style="clear: both"></div>
+
+   <script src="tai.js"></script>
+   <!-- TODO: websocket URL is hardcoded in sockCreate() in wsock.js -->
+   <script src="wsock.js"></script>
+   <script>
+      let cdisp   = null;
+      let sdisp   = null;
+      let pdisp   = null;
+
+      function handle_positioning(i, l)
+      {
+         if(! pdisp.selected)
+         {
+            // console.log("Click handler, no position selected.");
+            return false;
+         }
+
+         if(cdisp.selected)
+         {
+            sockSend("request.positionchange", { "cam": cdisp.selected, "pos": pdisp.selected });
+            cdisp.clearSelection();
+            pdisp.clearSelection();
+            return true;
+         }
+         else if(cdisp.multiselected.length > 0 )
+         {
+            cnames = cdisp.clearMultiselection();
+            sockSend("request.rotation", { "cams": cnames, "pos": pdisp.selected });
+            pdisp.clearSelection();
+            return true;
+         }
+
+         // console.log("Click handler waiting for one of camera or position.");
+         return false;
+      }
+
+      function handle_positionchanged(m)
+      {
+         // When the position is changed, the position ll text is the name of the camera in that position.
+         // The camera ll text is a list of all the position names it occupies - pos can only have one camera,
+         // But one camera can be in unlimited positions.
+         // TODO: Validate data
+         let c = cdisp.getItem(m.cam);
+         let p = pdisp.getItem(m.pos);
+
+         if(p === undefined) 
+         // This is actually normal because the server treats all positions in all scenes as existing all the time,
+         // but we only consider the ones in the active scene to exist.
+         {
+            console.log("Got position changed notify for pos " + m.pos + " which we don't see here.");
+            return
+         }
+
+         // console.log("Got position changed notify pos: " + p.name + " cam: " + c.name + " p.ll: " + p.ll);
+         if(p.ll != "")
+         {
+            let oldcam = cdisp.getItem(p.ll);
+            let lllist = oldcam.ll;
+            // console.log("Got oldcam: '" + oldcam.name + "' with ll [" + lllist + "]");
+            let ind = lllist.indexOf(p.name);
+            if(ind > -1)
+               lllist.splice(ind, 1);
+            if(lllist.length == 0)
+               oldcam.active = false;
+            oldcam.ll = lllist;
+         }
+         p.ll = c.name;
+         c.active = true;
+         let lllist = c.ll;
+         // TODO: Fix the null strings at their origin
+         while(lllist.indexOf("") > -1)
+            lllist.splice(lllist.indexOf(""), 1);
+            
+         lllist.push(p.name);
+         c.ll = lllist;
+
+         p.imgs = c.imgs;
+      }
+      sockDispatch("xsplit.positionchanged", handle_positionchanged);
+
+      function clear_positiondata()
+      {
+         for(let i of cdisp.items)
+         {
+            i.ll = []
+            i.ur = [];
+            i.active = false;
+         }
+      }
+
+      function clear_rotationdata()
+      {
+         for(let i of pdisp.items)
+            i.ur=[];
+         for(let i of cdisp.items)
+            i.ur=[];
+      }
+
+      function handle_rotationdata(m)
+      {
+         clear_rotationdata(); 
+         let ar = m["activerotations"];
+         for(let [r,v] of Object.entries(ar))
+         {
+            // console.log("got rotation " + r + " with positions " + ar[r]);
+            let pos = pdisp.getItem(r);
+            if(pos === undefined)
+            {
+               // console.log("We don't know about position " + r);
+               continue;
+            }
+            pos.ur = v;
+            for(let c of v)
+            {
+               // console.log("Labeling cam " + c + " ur with " + r);
+               let cam = cdisp.getItem(c);
+               let urt = cam.ur ?? [];
+               urt.push(r);
+               cam.ur = urt;
+            }
+         }
+      }
+      sockDispatch("server.activerotations", handle_rotationdata);
+
+      function handle_camlist(m)
+      {
+         // TODO: This comes through when we connect, or when the server reboots.  Decide
+         // whether we need to do something different if we get this > 1 time during our life
+         console.log("Got new camlist from server.");
+         cdisp = new TAI("camlist", 3, 1, true);
+         for(let x of m["cams"])
+         {
+            let imgs = [];
+            for(let i of x["thumbs"])
+            {
+               imgs.push(i[1]);
+            }
+            cdisp.addItem({ "name": x["name"], "imgs": imgs, "ul": x["name"], "lr": x["flags"], "flags": x["flags"] });
+         }
+         cdisp.selectedCallback = handle_positioning;
+
+         e = document.querySelector("#trolcams");
+         e.innerHTML="";
+         e.append(cdisp.createElement());
+         return true;
+      }
+      sockDispatch("server.camlist", handle_camlist);
+
+      function handle_scenedata(m)
+      {
+         // TODO: This comes in every time xsplit reconnects to the server.  Decide
+         // whether we should do something more efficient than throw away the old data/layout
+         // m contains one entry: m := { "scenedata" := [ { name:=, positions:= [], index:= }...]} 
+         sdisp = new TAI("scenelist", 1, 5);
+         for(let x of m["scenedata"])
+         {
+            x.imgs = ["img/scn_" + x.name + ".png"];
+            x.ul   = x.name;
+            sdisp.addItem(x);
+            console.log("Got scene data: " + JSON.stringify(x));
+         }
+         sdisp.selectedCallback = function (i,l) 
+            { 
+               // console.log("Got selectedCallback for " + i.name);
+               sockSend("request.scenechange", { "name": i.name }); 
+               return true;
+            };
+
+         e = document.querySelector("#trolscenes");
+         e.innerHTML = "";
+         e.append(sdisp.createElement());
+
+         return true;
+      }
+      sockDispatch("xsplit.scenedata", handle_scenedata);
+
+      function display_poslist()
+      {
+         // TODO: This comes through every time we change scenes, and nothing
+         // updates the positions to show all the proper data that we should 
+         // already know about, like what camera is in what position.
+         // Kinda' done: Now the server politely resends all the needed messages 
+         // to set up state after a scene change
+         e = document.querySelector("#trolpos");
+         e.innerHTML="";
+
+         pdisp = new TAI("poslist", 3);
+         for(let p of sdisp.getItem(sdisp.active).positions)
+         {
+            console.log("Adding position: " + p);
+            pdisp.addItem({ "name": p, "ul": p, "imgs": ["img/static.jpg"]});
+         }
+
+         pdisp.selectedCallback = handle_positioning;
+         // TODO: This is a cheap way to get the audio-only positions to be last.  
+         pdisp.items.sort().reverse();
+
+         e.append(pdisp.createElement());
+      }
+
+      function handle_scenechanged(m)
+      {
+         sdisp.clearActive();
+         sdisp.getItem(m['name']).active = true;
+         sdisp.active = m['name'];
+         display_poslist(); // Positions are per-scene.
+         // TODO: We shoudl repopulate the existing active positions when switching though.
+         clear_positiondata(); // Badlynamed clears data from cameras array
+         return true;
+      }
+      sockDispatch("xsplit.scenechanged", handle_scenechanged);
+
+      function handle_thumb(m)
+      {
+         // console.log("Updating thumbnail for " + m.name);
+         cdisp.addImage(m.name, m.data);
+         return true;
+      }
+      sockDispatch("camera.thumb", handle_thumb);
+
+      function doPong(m)
+      {
+         sockSend("user.pong", { "time": "IDK" });
+      }
+      sockDispatch("server.ping", doPong);
+
+      function onConnect() 
+      {
+         st = document.getElementById("status");
+         st.innerHTML="Connected";
+         sockSend("user.hello", {user: "DJ or Mr. A", thumbs: true, cams: true});
+      }
+      sockSetOnConnect(onConnect);
+
+      function onDisconnect() 
+      {
+         st = document.getElementById("status");
+         st.innerHTML="DISCONNECTED";
+      }
+      sockSetOnDisconnect(onDisconnect);
+   </script>
+</body>
+
+</html>

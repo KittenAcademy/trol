@@ -1,0 +1,7 @@
+[general]
+# botkey comes from Discord
+botkey = 
+# url of the websocket server ala tb2
+wsurl = ws://my.domain.com:8081/
+# ID of channel where trolbot is allowed to speak
+channel = 348934273974612873

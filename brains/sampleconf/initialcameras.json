@@ -1,0 +1,44 @@
+[   
+   {  
+      "type": "ANPVIZ",
+      "name": "zoom1", 
+      "address": "ka-zoom-cam",
+      "flags": ["PUBLIC"]
+   },
+
+   {  
+      "type": "LOREX",
+      "name": "4k1", 
+      "address": "ka-4k-cam",
+      "flags": ["PUBLIC"]
+   },
+
+   {  
+      "type": "AMCREST",
+      "name": "annex", 
+      "address": "annex-ceiling-cam",
+      "flags": ["PUBLIC"]
+   },
+
+   {  
+      "type": "OTHER",
+      "name": "scribphone", 
+      "address": "scribphone",
+      "rtspurl": "rtsp://scribphone:8080/h264_pcm.sdp",
+      "audiourl": "rtsp://scribphone:8080/h264_ulaw.sdp",
+      "jpgurl": "http://scribphone:8080/shot.jpg",
+      "pingurl": "http://scribphone:8080/videostatus",
+      "flags": ["MAGIC", "NOTHUMB"]
+   },
+
+   {  
+      "type": "OTHER",
+      "name": "null", 
+      "address": "127.0.0.1",
+      "rtspurl": "rtsp://127.0.0.1/",
+      "jpgurl": "rtsp://127.0.0.1/",
+      "pingurl": "rtsp://127.0.0.1/",
+      "audiourl": "rtsp://127.0.0.1/",
+      "flags": ["PUBLIC", "NOTHUMB"]
+   }
+]

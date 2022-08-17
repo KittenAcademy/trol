@@ -1,0 +1,8 @@
+const CONFIG = {
+   // Obvious
+   WSURI : "ws://nas1:8081",
+   // user/password for ALL CAMERAS the same.  eat it security nuts
+   // Seriously it's all unencrypted http so who cares
+   CAMUSER: "",
+   CAMPASS: "",
+};

@@ -1,0 +1,25 @@
+<!Doctype html>
+<html>
+<head>
+   <title>KA-Control</title>
+   <meta charset="utf-8">
+   <style>
+      body     {  background-color: black;
+                  color: white;
+               }
+   </style>
+</head>
+<body>
+   <h1 id="status">Offline</h1>
+   <div id="pagediv"></div>
+   <script> function update_status(m) { document.getElementById("status").innerHTML=m; } </script>
+   <script src="config.js"></script>
+   <script src="xjs.js"></script>
+   <script src="wsock.js"></script>
+   <script src="trol.js"></script>
+
+   <button onclick="requestRecording({'record': true });">Start Recording</button>
+   <button onclick="requestRecording({'record': false });">Stop Recording</button>
+   <button onclick="testButtonClick()">Do not press this button</button>
+
+</body>
