@@ -100,12 +100,12 @@ class IPCam():
                   self.replaceThumbnail(r.content)
                   if(thumbCall is not None):
                      thumbCall(self,self.thumbs[0][1])
-                  # log.debug(f"Update cam {self.name} great success!")
+                  self.lastUpdate = int(time());
                else:
                   raise Exception(f"Request for {self.name} returned {sc}")
             except Exception as e:
+               # We'll just keep trying forever, but take a note.
                self.lastError = f"{e}";
-               log.info(f"Exception getting thumbnail for {self.name} {e}")
 
          if runonce:
             return
@@ -146,7 +146,8 @@ class IPCam():
    # Every program needs a function called doMagic because otherwise how are coders wizards?
    # TODO: Rename this
    # Right now "magic" camera refers to the system where we poll for whether a camera is online and make it live if it is, used for micro closeups from phone
-   # Yes, the phone should probably push that info instead of being polled but you go to war with the code you got.
+   # Yes, the phone should probably push that info instead of being polled but you go to war with the code you got. -- using IP Webcam Pro on Android I can't find
+   # a good way to push when we're live.
    def doMagic(self):
       purl = self.getPingURL()
       isrunning  = False
