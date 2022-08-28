@@ -134,6 +134,7 @@ async def announce_and_set_winner(pitem, pos, channel):
 # TODO: discord.py can inform of when reactions are added instead of us waiting and polling afterwards, which might allow for interesting feedback and
 # an option like switch cameras after 30 seconds or 5 votes, whichever is first.
 async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdata=None, channel=conf['general']['channel']):
+   # pdata = list of items to select from in the poll.  each one has a 'name', 'filedata' = imagedata, 'filename' = optional.
    await send_to_channel(f"Vote for one of the following by clicking the first emoji reaction under your selection.  You have {duration} seconds to choose.  If no one votes, the current camera will remain.", duration=duration, channel=channel)
 
    for pitem in pdata:
@@ -143,7 +144,8 @@ async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdat
       if(n is None and fd is None):
          log.warn(f"Attempt to poll with item missing data")
          continue
-      postedmessage = await send_to_channel(n, filedata=fd, filename=fn, duration=duration + 30, channel=channel)
+      # Let's not automatically delete the messages here, do that when reading out the results so we don't step on ourselves.
+      postedmessage = await send_to_channel(n, filedata=fd, filename=fn, channel=channel)
       pitem['posted'] = postedmessage
       await postedmessage.add_reaction('\u2b06') # Unicode up arrow
 
@@ -166,6 +168,7 @@ async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdat
             if v > votes:
                votes = v
                winner = pitem
+            bot.loop.create_task(pm.delete())
          if winner is None:
             winner = pdata[0]
          await callback(winner, cdata, channel)
