@@ -1,0 +1,17 @@
+We'd love contributions.  It takes a village to raise a trol.  
+
+If you contribute, you must include your name (or whatever you'd like to be
+identified by) -- and optionally, contact info -- in this file, and by so
+doing, you grant a non-exclusive, perpetual, world-wide, irrevocable,
+no-charge, royalty-free copyright license to use, reproduce, prepare derivative
+works of, publicly display, publicly perform, sublicense, and distribute all
+contributions you have made to this project.
+
+This is a license agreement only; it does not transfer copyright ownership and
+does not change your rights to use your own contributions for any other
+purpose.
+
+Signing Contributors:
+
+Christopher "Mr. A" Jansen <scribblecj@gmail.com>
+
