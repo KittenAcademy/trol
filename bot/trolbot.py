@@ -340,6 +340,23 @@ async def testcamvote(ctx, pos):
       pdata.append({'name': cname, 'filename': cname + '.gif', 'filedata': create_gif(camlist[cname]["thumbs"]), 'currentposlist': currentposlist })
    resultTask = await create_poll(pdata, cdata=pos, channel=chanid)
 
+@bot.command()
+@trolRol()
+async def camchange(ctx, pos, cam):
+   chanid = ctx.channel.id
+   if not chanid:
+      log.error(f"ctx doesn't include channel ID of request, can't do anything. {ctx}");
+      return
+   try:
+      currentcam = poslist[pos]
+      if not currentcam:
+         raise Exception("no current camera in position {pos} ?")
+      if 'PUBLIC' not in camlist[cam]["flags"]:
+         raise Exception(f"Attempt to set non-public camera {cam}")
+      await send_to_trol("request.positionchange", { "pos": pos, "cam": cam } )
+   except Exception as e:
+      log.warning(f"Got exception {e} attempting camera change")
+      await send_to_channel("I just can't though.", duration=30, channel=chanid)
 
 @bot.command()
 @onlyChannel()
