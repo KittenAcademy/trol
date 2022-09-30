@@ -72,6 +72,7 @@ scenedata       = []
 activescene     = None
 activepositions = Persist(conf['posfile']).ReadData()
 activerotations = {}
+poslastchange   = {} 
 
 ###
 ### s = global websocket wsserver object
@@ -241,10 +242,24 @@ def RequestPositionchange(c,m):
       return;
    # TODO: Validate, auth, etc.
 
+   # First rule of position change: If a local user (in the house) has changed the position within the last minute,
+   # don't allow changes through the bot.  
+   if poslastchange.get(m['pos']) and user_is_bot(c):
+      if time() - poslastchange[m['pos']] < 60:
+         log.warning(f"{c.id} requested position change for {m['pos']} but denied due to time limits")
+         c.send_message('user.error', { "errmsg": f"{m['pos']} changed by Mr. A or DJ, wait a minute." })
+         return
+
    # If we have a rotation happening but got a request to change the camera from 
    # elsewhere then that means we're done rotating.
    endRotation(m['pos'])
+
    DoPositionChange(m['pos'], m['cam'])
+   # Log time of last positionchange request from local users for lockout/rate limiting
+   # TODO: c'mon what is this mess?  
+   if not user_is_bot(c):
+      poslastchange[m['pos']] = int(time())
+
 register_message("request.positionchange", RequestPositionchange)
 
 def DoPositionChange(pos,cam):
@@ -371,6 +386,15 @@ def send_to_list(who, mt, mess={}, but=None):
       if(but == c):
          continue
       c.send_message(mt, mess)
+
+# TODO: Start validating who the bot is passing requests on behalf of, rather than
+# just giving the bot itself permissions to do/not do.  Or in addition to I suppose.
+def user_is_bot(c):
+   """Check if a user is trolbot"""
+   # TODO: Get in proper users and permissions oh I said this already.
+   if(c.islocal and "trolbot" in c.user):
+      return True
+   return False
 
 def user_is_xsplit(c):
    """Check if a user is xsplit"""

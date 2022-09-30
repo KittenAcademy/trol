@@ -113,6 +113,9 @@ async def handle_message(mess):
       c = item.get("name")
       camlist[c]["thumbs"].insert(0, item.get("data")) 
       del camlist[c]["thumbs"][3:]
+   elif mtype == "user.error":
+      # TODO: Once we start tracking users properly, make sure this message goes to whoever made the request.
+      await send_to_channel(f"There was an error: {item.get('errmsg')}")
    elif mtype == "server.activerotations":
       pass # for now
    else:
