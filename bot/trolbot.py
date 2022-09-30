@@ -436,6 +436,8 @@ async def helpme(ctx):
    message += " $runthenews        = Display Scrawl NOW\n"
    message += "\n"
    message += "Other Commands:\n"
+   message += " $testcamvote POS   = Start a camera change vote in position POS\n"
+   message += " $camchange POS CAM = Change the camera at position POS to CAM\n"
    message += " $helpme            = This\n"
    message += " $ping              = Pong\n"
    message += "\n"
