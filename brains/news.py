@@ -24,7 +24,7 @@ class News():
             return True
       return False
 
-   def getID(self):
+   def getNextID(self):
       nid = 0
       while True:
          nid += 1
@@ -35,7 +35,7 @@ class News():
 
    def addItem(self, message, t = DEFAULT_TIME): 
       t = time() + (60 * 60 * t)
-      self.items.append({'message': message, 'expires': t, 'id': self.getID()})
+      self.items.append({'message': message, 'expires': t, 'id': self.getNextID()})
 
    def getItems(self):
       self.expireItems()
@@ -49,13 +49,15 @@ class News():
    def delItem(self, id):
       for i in self.items:
          if i['id'] == int(id):
-            self.items.remove(i)
+            i = None
+      self.items = [i for i in self.items if i is not None] # And I thought Python was supposed to be smart
 
    def expireItems(self):
       now = time()
       for i in self.items:
          if i['expires'] < now:
-            self.items.remove(i)
+            i = None
+      self.items = [i for i in self.items if i is not None] # And I thought Python was supposed to be smart
 
    def getScroll(self):
       self.expireItems()
