@@ -249,6 +249,11 @@ def RequestPositionchange(c,m):
          log.warning(f"{c.id} requested position change for {m['pos']} but denied due to time limits")
          c.send_message('user.error', { "errmsg": f"{m['pos']} changed by Mr. A or DJ, wait a minute." })
          return
+   # Second rule of position change: If we have a "MAGIC" camera in that position, bot users can't touch it.
+   if "MAGIC" in ipcam.get_cam_by_name(activepositions[m['pos']]).flags and user_is_bot(c):
+      log.warning(f"{c.id} requested position change but MAGIC in position {m['pos']}")
+      c.send_message('user.error', {  "errmsg": f"{m['pos']} showing close-up." })
+      return
 
    # If we have a rotation happening but got a request to change the camera from 
    # elsewhere then that means we're done rotating.
