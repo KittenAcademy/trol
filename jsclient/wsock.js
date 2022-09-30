@@ -53,7 +53,7 @@ function sockReconnect()
    _sr();
 }
 
-function sockCreate(url = "ws://nas1:8081/") 
+function sockCreate(url = brainsWsAddress)
 {
    s = new WebSocket(url);
    s.addEventListener('close', sockHandleClose);
