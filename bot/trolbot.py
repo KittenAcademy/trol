@@ -141,11 +141,13 @@ async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdat
       n = pitem.get('name', None)
       fd = pitem.get('filedata', None)
       fn = pitem.get('filename', None)
+      currentposlist = pitem.get('currentposlist', None)
       if(n is None and fd is None):
          log.warn(f"Attempt to poll with item missing data")
          continue
+      text = n + (f" (already displayed in position {','.join(currentposlist)})" if currentposlist else "")
       # Let's not automatically delete the messages here, do that when reading out the results so we don't step on ourselves.
-      postedmessage = await send_to_channel(n, filedata=fd, filename=fn, channel=channel)
+      postedmessage = await send_to_channel(text, filedata=fd, filename=fn, channel=channel)
       pitem['posted'] = postedmessage
       await postedmessage.add_reaction('\u2b06') # Unicode up arrow
 
@@ -331,7 +333,8 @@ async def testcamvote(ctx, pos):
          continue
       if cname == currentcam:
          continue
-      pdata.append({'name': cname, 'filename': cname + '.gif', 'filedata': create_gif(camlist[cname]["thumbs"])})
+      currentposlist = [pos for pos, cam in poslist.items() if cam == cname]
+      pdata.append({'name': cname, 'filename': cname + '.gif', 'filedata': create_gif(camlist[cname]["thumbs"]), 'currentposlist': currentposlist })
    resultTask = await create_poll(pdata, cdata=pos, channel=chanid)
 
 
