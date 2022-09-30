@@ -145,7 +145,7 @@ async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdat
       if(n is None and fd is None):
          log.warn(f"Attempt to poll with item missing data")
          continue
-      text = n + (f" (currently {','.join(currentposlist)})" if currentposlist else "")
+      text = n + (f" (already displayed in position {','.join(currentposlist)})" if currentposlist else "")
       # Let's not automatically delete the messages here, do that when reading out the results so we don't step on ourselves.
       postedmessage = await send_to_channel(text, filedata=fd, filename=fn, channel=channel)
       pitem['posted'] = postedmessage
