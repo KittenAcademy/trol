@@ -187,6 +187,14 @@ class IPCam():
          self.magicthread.join()
       self.magicthread = None
 
+   def addFlag(self, flag):
+      if flag not in self.flags:
+         self.flags.append(flag)
+
+   def removeFlag(self, flag):
+      while flag in self.flags:
+         self.flags.remove(flag)
+
 
 # ANPVIZ/HIKVISION see doc in resources/
 class ANPVIZCam(IPCam):

@@ -325,6 +325,43 @@ def RequestRotation(c,m):
    informPositions() # TODO: Should be informRotations maybe?
 register_message("request.rotation", RequestRotation)
 
+# For use by the JS client until we have proper auth/users on the bot
+# Intended to allow us to set cameras public/private mostly
+# TODO: persist state?  Or would we rather reload defaults after a reboot as we do?
+def changeFlag(c,m):
+   if 'cam' not in m:
+      log.warning(f"{c.id} requested flag change without camera")
+      return
+   if 'op' not in m:
+      log.warning(f"{c.id} requested flag change, but we don't know if it's add or remove or toggle")
+      return
+   if 'flag' not in m:
+      log.warning(f"{c.id} requested flag change without flag")
+      return
+
+   cam = ipcam.get_cam_by_name(m['cam'])
+   if cam is None:
+      log.warning(f"{c.id} invalid flagchange camera name: {m['cam']}")
+      return
+
+   if m['op'] == 'add':
+      cam.addFlag(m['flag'])
+   elif m['op'] == 'remove':
+      cam.removeFlag(m['flag'])
+   else:
+      log.warning(f"{c.id} invalid flag change {m['op']} {m['flag']} for cam {m['cam']}")
+
+   # TODO: If changing multiple cameras this is going to get disruptive
+   # Also do we really have to resend everything?  stupid javascript, fix that.
+   # TODO: Inform everyone, not just caller
+
+   send_to_list(camusers, "server.camlist", { "cams": ipcam.get_sharable_camlist(True) })
+   # c.send_message("xsplit.scenedata", { "scenedata": scenedata })
+   # We're resending this because the JS is dumb and forgets to label what is where unless it gets this after the camchange
+   if(activescene is not None): # We learn this from a client so we may not know it yet.
+      informScenechanged([c]) # Also will inform positional data 
+register_message("request.flagchange", changeFlag)
+      
 def rotThread(pos, interval):
    """Every X seconds, switch the camera in the given position to the next one in a list."""
    global activerotations

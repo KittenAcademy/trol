@@ -18,7 +18,11 @@
    <div id="trolcams" style="clear: both"></div>
    <div style="clear: both"><h1>Scenes</h1></div>
    <div id="trolscenes" style="clear: both"></div>
-   <div id="footer" style="clear: both"></div>
+   <div style="clear: both"><h1>Other</h1></div>
+   <div id="footer" style="clear: both">
+      <button id="add" onclick="flagclick(this.id)">Make PUBLIC</button>
+      <button id="remove" onclick="flagclick(this.id)">Make PRIVATE</button>
+   </div>
 
    <script src="config.js"></script>
    <script src="tai.js"></script>
@@ -53,6 +57,27 @@
 
          // console.log("Click handler waiting for one of camera or position.");
          return false;
+      }
+
+      function flagclick(op)
+      {
+         if(cdisp.selected)
+         {
+            sockSend("request.flagchange", { "op": op, "cam": cdisp.selected, "flag": "PUBLIC" })
+            cdisp.clearSelection()
+            return true
+         }
+         else if(cdisp.multiselected.length > 0) 
+         {
+            cnames = cdisp.clearMultiselection();
+            for(c of cnames)
+            {
+               sockSend("request.flagchange", { "op": op, "cam": c, "flag": "PUBLIC" })
+            }
+            return true
+         }
+         console.log("flagclick, no cams selected probably")
+         return false
       }
 
       function handle_positionchanged(m)
