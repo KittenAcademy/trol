@@ -13,6 +13,7 @@ import asyncio
 import json
 import argparse
 import logging
+import re
 from time import time,localtime
 from datetime import timedelta
 from traceback import format_exc
@@ -71,6 +72,8 @@ async def handle_message(mess):
 
    if mtype == "server.ping": # Server warning us to say something or be killed
       await send_to_trol("user.pong", { "time": time() })
+   elif mtype == "recording.created":
+      await poll_recording_label(item.get('filename'), duration=300)
    # News Messages
    elif mtype == "news.data": # This is the one we get if we requested the data specifically
       await handle_listNews(item.get('newsdata'))
@@ -82,7 +85,7 @@ async def handle_message(mess):
    elif mtype == "request.recording": # Used as a signal of whether the magic cam is on
       # should more properly maybe be xsplit.recording which is what's sent when actually recording but it's not passed through trol yet
       lt = localtime(time())
-      t = f"{lt.tm_hour:02d}:{lt.tm_min:02d}"
+      t = f"{lt.tm_hour:02d}:{lt.tm_min:02d}:{lt.tm_sec:02d}"
       isactive = "started" if item.get("record", False) else "ended"
       await send_to_channel(f"Recording {isactive} at {t}")
    # Messages we need for displaying thummnails on chat
@@ -133,7 +136,6 @@ async def announce_and_set_winner(pitem, pos, channel):
 
 # TODO: Set up an automatic poller to get camera changes all night long
 # TODO: Prevent anyone from setting positions we don't want set
-# TODO: Make a way to change which cameras are PUBLIC
 # TODO: discord.py can inform of when reactions are added instead of us waiting and polling afterwards, which might allow for interesting feedback and
 # an option like switch cameras after 30 seconds or 5 votes, whichever is first.
 async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdata=None, channel=conf['general']['channel']):
@@ -214,6 +216,82 @@ def create_gif(imgdat):
 
    return None
       
+
+async def poll_recording_label(filename, duration=300, channel=conf['general']['channel']):
+
+   fn = re.split("/", filename)[-1]
+   tp = re.split("[_.-]", fn)
+   rectime = f"{tp[0]}-{tp[1]}-{tp[2]} {tp[3]}:{tp[4]}:{tp[5]}"
+   log.debug(f"Polling for recording {filename} with timestamp {rectime}")
+
+   pollmsg = await send_to_channel(
+      f"I've detected a new recording/micro closeup that ended at {rectime}.  " +
+      f"Please help me label it.  You can reply to this message with a short description. \n" +
+      f"TIP: use names wherever possible, e.g. \"Custard playing with Sailing Kits\" not \"Faculty playing with kittens.\" \n" +
+      f"If there are multiple replies, the reply with the most reactions will be selected. \n " +
+      f"IMPORTANT: If this is not a micro closeup (like if it's a mailbag or a live closeup), please do not reply.  Instead click the 'no' emoji below. \n" +
+      f"You have {duration} seconds:", channel=channel)
+   await pollmsg.add_reaction('\u26d4') # Unicode 'no entry'
+
+   replies = []
+
+   async def get_replies(message):
+      nonlocal replies
+      # log.debug(f"Got message: {message.clean_content}")
+      if message.reference and message.reference.message_id == pollmsg.id:
+         # log.debug(f"Got reply: {message.clean_content}")
+         replies.append(message)
+   bot.add_listener(get_replies, name="on_message")
+
+   async def get_results():
+      await asyncio.sleep(duration)
+      bot.remove_listener(get_replies, name="on_message")
+      pm = discord.utils.get(bot.cached_messages, id=pollmsg.id)
+      try:
+         if pm is None:
+            raise Exception("Missing pollmsg")
+         rcount = len(pm.reactions)
+         if(not rcount > 0):
+            raise Exception("Missing reactions")
+
+         favorite = None
+         fvotes = 0
+         for r in replies:
+            # log.debug(f"read reply: {r.clean_content}")
+            tvotes = 0
+            for react in r.reactions:
+               tvotes = tvotes + react.count
+            if favorite is None or fvotes < tvotes:
+               favorite = r
+               fvotes   = tvotes
+         votesforfavorite = fvotes
+
+         votesforpm = -1
+         for react in pm.reactions:
+            votesforpm = votesforpm + react.count
+
+         isCloseup = True if votesforpm > votesforfavorite else False
+
+         if favorite is None:
+            winner = f"Recorded at {rectime}KATZ"
+         else:
+            winner = discord.utils.remove_markdown(favorite.clean_content)
+
+         if isCloseup:
+            await send_to_channel(f"You decided the recording wasn't a micro, so I'll leave it out of the archive.", channel=channel, duration=30)
+         else:
+            await send_to_channel(f"You decided the recording should be labeled \"{winner}\".", channel=channel, duration=30)
+         await send_to_trol("recording.description", { 'filename': filename, 'description': winner, 'notmicro': isCloseup })
+
+      except Exception as e:
+         log.warning(f"Attempt to label {filename} resulted in exception {e}")
+         await send_to_channel(f"...aborted attempt to label recording {rectime}.", channel=channel, duration=30)
+      finally:
+         if pm is not None:
+            bot.loop.create_task(pm.delete())
+
+   bot.loop.create_task(get_results())
+ 
 
 async def send_to_trol(mtype, message):
    # TODO: Check values or IDK, anything
@@ -339,6 +417,16 @@ async def testcamvote(ctx, pos):
       currentposlist = [pos for pos, cam in poslist.items() if cam == cname]
       pdata.append({'name': cname, 'filename': cname + '.gif', 'filedata': create_gif(camlist[cname]["thumbs"]), 'currentposlist': currentposlist })
    resultTask = await create_poll(pdata, cdata=pos, channel=chanid)
+
+@bot.command()
+@trolRol()
+async def testlabelvote(ctx, fn, duration=20):
+   chanid = ctx.channel.id
+   if not chanid:
+      log.error(f"ctx doesn't include channel ID of request, can't do anything. {ctx}");
+      return
+   
+   await poll_recording_label(fn, channel = chanid, duration=120)
 
 @bot.command()
 @trolRol()

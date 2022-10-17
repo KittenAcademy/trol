@@ -31,6 +31,7 @@ from persist import Persist
 from sys import exit
 from time import time,sleep
 from datetime import datetime
+from pathlib import Path
 
 # Set up logging
 logging.basicConfig()
@@ -361,6 +362,35 @@ def changeFlag(c,m):
    if(activescene is not None): # We learn this from a client so we may not know it yet.
       informScenechanged([c]) # Also will inform positional data 
 register_message("request.flagchange", changeFlag)
+
+# Message sent by trolcli/justmove.py when a new xsplit recording is completed and moved to the
+# processing directory.  All we do is pass it on to trolbot so trolbot can poll for a description
+def recordingCreated(c,m):
+   # TODO: verify sender is trolcli
+   filename = m.get('filename', None)
+   if not filename or not Path(filename).exists():
+      log.warning(f"Got nonexistent filename for recording: {filename}")
+      return
+   
+   send_to_bot("recording.created", { "filename": filename })
+register_message("recording.created", recordingCreated)
+
+# Results of trolbot polling for a new xsplit recording
+def recordingDescription(c,m):
+   # TODO: verify sender is trolbot
+   filename = Path(m.get('filename'))
+   if not filename or not filename.exists():
+      log.warning(f"Got nonexistent filename for recording: {filename}")
+      return
+
+   with filename.with_suffix(".json").open("w") as f:
+      json.dump({ "description": m.get('description'), "notmicro": m.get('notmicro') }, f, indent=3)
+
+   log.info(f"Wrote {str(filename)} metadata file.")
+register_message("recording.description", recordingDescription)
+   
+
+
       
 def rotThread(pos, interval):
    """Every X seconds, switch the camera in the given position to the next one in a list."""
@@ -437,6 +467,12 @@ def user_is_bot(c):
    if(c.islocal and "trolbot" in c.user):
       return True
    return False
+
+def send_to_bot(mt, mess={}):
+   """Send a message but only to users who are trolbot"""
+   for c in s.clients:
+      if(user_is_bot(c)):
+         c.send_message(mt, mess)
 
 def user_is_xsplit(c):
    """Check if a user is xsplit"""
