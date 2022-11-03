@@ -359,6 +359,26 @@ async def camchange(ctx, pos, cam):
       await send_to_channel("I just can't though.", duration=30, channel=chanid)
 
 @bot.command()
+@trolRol()
+async def camcheck(ctx, camid):
+   chanid = ctx.channel.id
+   if not chanid:
+      log.error(f"ctx doesn't include channel ID of request, can't do anything. {ctx}")
+      return
+   try:
+      if camid not in camlist:
+         raise Exception(f"{camid} does not exist")
+      cam = camlist[camid]
+      if 'PUBLIC' not in cam["flags"]:
+         raise Exception(f"{camid} is not public")
+      currentposlist = [pos for pos, c in poslist.items() if c == camid]
+      message = camid + (f" (currently in positions {','.join(currentposlist)})" if currentposlist else "")
+      await send_to_channel(message, filedata=create_gif(cam["thumbs"]), filename=f"camera {camid}", duration=30)
+   except Exception as e:
+      log.warning(f"Got exception {e} attempting camera check")
+      await send_to_channel("I just can't though.", duration=30, channel=chanid)
+
+@bot.command()
 @onlyChannel()
 @trolRol()
 async def addnews(ctx, *args):
@@ -438,6 +458,7 @@ async def helpme(ctx):
    message += "Other Commands:\n"
    message += " $testcamvote POS   = Start a camera change vote in position POS\n"
    message += " $camchange POS CAM = Change the camera at position POS to CAM\n"
+   message += " $camcheck CAM = Show camera preview gif for CAM\n"
    message += " $helpme            = This\n"
    message += " $ping              = Pong\n"
    message += "\n"
