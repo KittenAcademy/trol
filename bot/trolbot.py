@@ -73,7 +73,7 @@ async def handle_message(mess):
    if mtype == "server.ping": # Server warning us to say something or be killed
       await send_to_trol("user.pong", { "time": time() })
    elif mtype == "recording.created":
-      await poll_recording_label(item.get('filename'), duration=300)
+      await poll_recording_label(item.get('filename'), duration=7200)
    # News Messages
    elif mtype == "news.data": # This is the one we get if we requested the data specifically
       await handle_listNews(item.get('newsdata'))
@@ -230,7 +230,7 @@ async def poll_recording_label(filename, duration=300, channel=conf['general']['
       f"TIP: use names wherever possible, e.g. \"Custard playing with Sailing Kits\" not \"Faculty playing with kittens.\" \n" +
       f"If there are multiple replies, the reply with the most reactions will be selected. \n " +
       f"IMPORTANT: If this is not a micro closeup (like if it's a mailbag or a live closeup), please do not reply.  Instead click the 'no' emoji below. \n" +
-      f"You have {duration} seconds:", channel=channel)
+      f"You have {duration/60} minutes:", channel=channel)
    await pollmsg.add_reaction('\u26d4') # Unicode 'no entry'
 
    replies = []
@@ -426,7 +426,7 @@ async def testlabelvote(ctx, fn, duration=20):
       log.error(f"ctx doesn't include channel ID of request, can't do anything. {ctx}");
       return
    
-   await poll_recording_label(fn, channel = chanid, duration=120)
+   await poll_recording_label(fn, channel = chanid, duration=300)
 
 @bot.command()
 @trolRol()
