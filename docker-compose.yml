@@ -1,0 +1,60 @@
+version: "3.9"
+services:
+  brains:
+    image: registry.scribblej.com/trolbrains:latest
+    build: ./brains
+    ports:
+      - "8081:8081"
+    configs:
+      - source: brainconfig
+        target: /usr/src/app/trolbrains.conf
+      - source: cameraconfig
+        target: /cameras-config.json
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+    volumes:
+      - type: bind
+        source: /mnt/superdrbd1/docker/trolbrains
+        target: /mnt/brains
+    user: 120:120
+
+  jsclient:
+    image: registry.scribblej.com/troljsclient:latest
+    build: ./jsclient
+    ports: 
+      - "8000:80"
+    configs:
+      - source: jsclientconfig
+        target: /usr/share/nginx/html/config.js
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+
+  bot:
+    image: registry.scribblej.com/trolbot:latest
+    build: ./bot
+    configs:
+      - source: botconfig
+        target: /usr/src/app/discord.conf
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+
+
+configs:
+  jsclientconfig:
+    file: ./configs/jsclient-config.js
+  botconfig:
+    file: ./configs/bot-config.conf
+  brainconfig:
+    file: ./configs/brains-config.json
+  cameraconfig:
+    file: ./configs/cameras-config.json
+
