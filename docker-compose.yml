@@ -51,8 +51,29 @@ services:
       restart_policy:
         condition: any
         delay: 5s
+  kafilemover:
+    image: registry.scribblej.com/kafilemover:latest
+    build: .
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+    volumes:
+      - type: volume
+        source: xsplit-video1
+        target: /mnt/incoming
+      - type: volume
+        source: nas2-kavids
+        target: /mnt/outgoing
+    user: 120:120
 
 volumes:
+  xsplit-video1:
+    driver_opts:
+      type: "cifs"
+      device: "//TESLA/Users/Kitten Academy/Videos/Xsplit/Broadcaster/scribblecj@gmail.com"
+      o: "addr=TESLA,username=${xsplit_user},password=${xsplit_pass},uid=120,gid=120,vers=2.0"
   nas2-kavids:
     driver_opts:
       type: "cifs"
