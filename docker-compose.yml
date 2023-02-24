@@ -4,7 +4,8 @@ services:
     image: registry.scribblej.com/trolbrains:latest
     build: ./brains
     ports:
-      - "8081:8081"
+      - target: 8081
+        published: 8081
     configs:
       - source: brainconfig
         target: /usr/src/app/trolbrains.conf
@@ -19,13 +20,17 @@ services:
       - type: bind
         source: /mnt/superdrbd1/docker/trolbrains
         target: /mnt/brains
+      - type: volume
+        source: nas2-kavids
+        target: /mnt/outgoing
     user: 120:120
 
   jsclient:
     image: registry.scribblej.com/troljsclient:latest
     build: ./jsclient
     ports: 
-      - "8000:80"
+      - target: 80
+        published: 8000
     configs:
       - source: jsclientconfig
         target: /usr/share/nginx/html/config.js
@@ -47,6 +52,12 @@ services:
         condition: any
         delay: 5s
 
+volumes:
+  nas2-kavids:
+    driver_opts:
+      type: "cifs"
+      device: "//nas2/home/xsplit-rec"
+      o: "vers=2.0,addr=nas2,username=${nas2_user},password=${nas2_pass},uid=120,gid=120"
 
 configs:
   jsclientconfig:

@@ -10,3 +10,5 @@ COPY . .
 
 CMD [ "python", "./tb.py", "--config", "./trolbrains.conf" ]
 
+ENV TZ America/New_York
+

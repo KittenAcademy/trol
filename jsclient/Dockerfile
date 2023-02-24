@@ -4,3 +4,6 @@ COPY . /usr/share/nginx/html
 
 # TODO: Manage config properly
 
+ENV TZ America/New_York
+
+

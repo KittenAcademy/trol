@@ -10,3 +10,5 @@ COPY . .
 
 CMD [ "python", "./trolbot.py", "--config", "./discord.conf" ]
 
+ENV TZ America/New_York
+
