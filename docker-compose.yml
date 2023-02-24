@@ -51,9 +51,10 @@ services:
       restart_policy:
         condition: any
         delay: 5s
+
   kafilemover:
     image: registry.scribblej.com/kafilemover:latest
-    build: .
+    build: ./filemover
     deploy:
       replicas: 1
       restart_policy:
