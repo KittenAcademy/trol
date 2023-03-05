@@ -3,7 +3,7 @@
  * because to users of xjs, this makes more sense than being able to set the contents of a source directly from your extension/plugin
  *
  */
-let WSURL = "ws://nas1:8081/"
+let WSURL = "ws://superswarm:8081/"
 // State used by sockReconnect() below
 let sock = createSock();
 let sockFails = 0;
