@@ -49,15 +49,14 @@ class News():
    def delItem(self, id):
       for i in self.items:
          if i['id'] == int(id):
-            i = None
-      self.items = [i for i in self.items if i is not None] # And I thought Python was supposed to be smart
+             self.items.remove(i)
 
    def expireItems(self):
       now = time()
-      for i in self.items:
+      it = self.items.copy()
+      for i in it:
          if i['expires'] < now:
-            i = None
-      self.items = [i for i in self.items if i is not None] # And I thought Python was supposed to be smart
+            self.delItem(i['id'])
 
    def getScroll(self):
       self.expireItems()
@@ -71,3 +70,11 @@ class News():
       news += OUTRO 
       return news
       
+if __name__ == '__main__':
+    n = News()
+    n.addItem("Test news 1")
+    n.addItem("Test news 2")
+    n.addItem("test news 3")
+    print(f"News is: {n.getScroll()}")
+    n.delItem(2)
+    print(f"News is: {n.getScroll()}")
