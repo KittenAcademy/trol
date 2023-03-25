@@ -175,10 +175,10 @@ async def create_poll(pdata, callback=announce_and_set_winner, duration=30, cdat
             if v > votes:
                votes = v
                winner = pitem
-            bot.loop.create_task(pm.delete())
          if winner is None:
             winner = pdata[0]
          await callback(winner, cdata, channel)
+         bot.loop.create_task(bot.get_channel(int(channel)).delete_messages([pitem['posted'] for pitem in pdata]))
          return winner
       except asyncio.CancelledError:
          log.debug(f"Waiting on poll results cancelled.")
